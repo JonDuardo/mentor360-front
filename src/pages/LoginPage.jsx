@@ -1,55 +1,36 @@
-// LoginPage.js
+// src/pages/LoginPage.jsx
 import { useState } from "react";
-
-// Base de API robusta (fallback local e saneamento)
-const API = process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
-  .trim()
-  .replace(/\/+$/, "");
+import { useNavigate, Link } from "react-router-dom";
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [aceitaPolitica, setAceitaPolitica] = useState(false);
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setErro("");
-
-    if (!aceitaPolitica) {
-      setErro("Você precisa aceitar a Política de Privacidade para continuar.");
-      return;
-    }
-
-    setCarregando(true);
+    setMsg("");
+    setLoading(true);
     try {
-      
-      let data;
-      try { data = JSON.parse(text); }
-      catch { throw new Error("Resposta da API não é JSON: " + text.slice(0, 120)); }
-
-      const user_id = data?.user?.id ?? data?.user_id ?? data?.id;
-      const nome =
-        data?.user?.nome ??
-        data?.nome ??
-        data?.user?.name ??
-        data?.name ??
-        "Usuário";
-
-      if (!user_id) throw new Error("Resposta inválida do servidor (user_id).");
-
-      onLogin({ user_id, nome });
+      // usa a função vinda do AppRoutes, se existir
+      if (typeof onLogin === "function") {
+        await onLogin(email, senha);
+      }
+      // sucesso: manda pra home (ou "/chat" se preferir)
+      navigate("/", { replace: true });
     } catch (err) {
-      setErro(err.message);
+      setMsg(err?.message || "Falha no login");
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
   }
 
   return (
     <div className="max-w-md mx-auto p-6">
       <h1 className="text-2xl font-semibold mb-4">Entrar</h1>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
           <span className="text-sm">E-mail</span>
@@ -59,7 +40,6 @@ export default function LoginPage({ onLogin }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="voce@exemplo.com"
           />
         </label>
 
@@ -71,39 +51,26 @@ export default function LoginPage({ onLogin }) {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
-            placeholder="••••••••"
           />
         </label>
 
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={aceitaPolitica}
-            onChange={(e) => setAceitaPolitica(e.target.checked)}
-          />
-          <span>
-            Li e aceito a{" "}
-            <a
-              href="/politica"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              Política de Privacidade
-            </a>.
-          </span>
-        </label>
-
-        {erro && <div className="text-red-600 text-sm">{erro}</div>}
+        {msg && <div className="text-sm text-red-600">{msg}</div>}
 
         <button
           type="submit"
-          disabled={carregando || !aceitaPolitica}
-          className="w-full bg-black text-white py-2 rounded disabled:opacity-60"
+          disabled={loading}
+          className="w-full bg-black text-white py-2 rounded"
         >
-          {carregando ? "Entrando..." : "Entrar"}
+          {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
+
+      <div className="mt-4 text-sm">
+        <span className="text-gray-600">Ainda não tem conta? </span>
+        <Link to="/cadastro" className="underline">
+          Cadastre-se
+        </Link>
+      </div>
     </div>
   );
 }
