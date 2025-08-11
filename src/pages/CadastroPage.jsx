@@ -1,6 +1,7 @@
 // src/pages/CadastroPage.jsx
 import { useState } from "react";
 import { API_BASE_URL } from "../config"; // usa a URL central
+import { useNavigate } from "react-router-dom";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -10,6 +11,8 @@ export default function CadastroPage() {
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const navigate = useNavigate();
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -42,7 +45,8 @@ export default function CadastroPage() {
         throw new Error(msg);
       }
 
-      setMensagem("Cadastro realizado com sucesso! Você já pode fazer login.");
+      setMensagem("Cadastro realizado com sucesso! Redirecionando para o login...");
+      setTimeout(() => navigate("/login", { replace: true }), 800); // 0,8s p/ o usuário ver a mensagem
       setNome(""); setEmail(""); setTelefone(""); setTelefoneEmergencia(""); setSenha("");
     } catch (err) {
       setMensagem(
