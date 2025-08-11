@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 // Base de API robusta (fallback local e saneamento)
-const API = (process.env.REACT_APP_API_BASE_URL || "http://localhost:3000")
+const API = process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
   .trim()
   .replace(/\/+$/, "");
 
@@ -24,14 +24,7 @@ export default function LoginPage({ onLogin }) {
 
     setCarregando(true);
     try {
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
-      });
-      const text = await res.text();
-      if (!res.ok) throw new Error(text || "Falha no login");
-
+      
       let data;
       try { data = JSON.parse(text); }
       catch { throw new Error("Resposta da API não é JSON: " + text.slice(0, 120)); }
