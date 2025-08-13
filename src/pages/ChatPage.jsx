@@ -1,10 +1,39 @@
-// ChatPage.js
+// src/pages/ChatPage.js
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { API_BASE } from "../lib/api";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL ||
-  "http://localhost:3000"; // fallback local (ajuste se preferir)
+// Fallback: cria sessão se chegarmos sem sessao_id
+async function criarSessaoFallback(user_id) {
+  if (!user_id) throw new Error("user_id ausente");
+
+  const r = await fetch(`${API_BASE}/nova-sessao`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id,
+      mensagem: "Início da sessão (fallback ChatPage)",
+    }),
+  });
+
+  const text = await r.text();
+  if (!r.ok) {
+    throw new Error(
+      (text && text.slice(0, 160)) || `Falha ao criar sessão (HTTP ${r.status})`
+    );
+  }
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Resposta não é JSON");
+  }
+
+  const novaId = data?.sessao?.id;
+  if (!novaId) throw new Error("Resposta sem sessao.id");
+  return String(novaId);
+}
 
 export default function ChatPage({
   user_id: userIdProp,
@@ -30,39 +59,30 @@ export default function ChatPage({
   const [erro, setErro] = useState("");
   const bottomRef = useRef(null);
 
-  // cria sessão automaticamente se não houver uma
+  // Garante uma sessão caso a página seja aberta sem sessaoId (AppRoutes já tenta, isto é só um fallback)
   useEffect(() => {
-    async function garantirSessao() {
-      if (!user_id) return; // sem usuário, não cria
-      if (sessaoId) return; // já existe
+    let cancelado = false;
 
+    async function garantirSessao() {
+      if (!user_id) return;        // sem usuário, não cria
+      if (sessaoId) return;        // já existe
       try {
         setLoadingSessao(true);
-        const res = await fetch(`${API_BASE_URL}/sessao`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id,
-            mensagem: "Início da sessão",
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.erro || "Erro ao registrar sessão.");
-        const novoId = data?.sessao?.id;
-        if (novoId) {
-          localStorage.setItem("sessao_id", novoId);
-          setSessaoId(novoId);
-        } else {
-          throw new Error("Resposta sem sessao.id");
-        }
+        const novoId = await criarSessaoFallback(user_id);
+        if (cancelado) return;
+        localStorage.setItem("sessao_id", novoId);
+        setSessaoId(novoId);
       } catch (e) {
-        setErro(e.message);
+        if (!cancelado) setErro(e.message);
       } finally {
-        setLoadingSessao(false);
+        if (!cancelado) setLoadingSessao(false);
       }
     }
+
     garantirSessao();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelado = true;
+    };
   }, [user_id, sessaoId]);
 
   // Scroll automático para o fim
@@ -76,7 +96,9 @@ export default function ChatPage({
       setErro("");
       if (!sessaoId) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/historico/${sessaoId}`);
+        const res = await fetch(
+          `${API_BASE}/historico/${encodeURIComponent(sessaoId)}`
+        );
         const data = await res.json();
         if (!res.ok)
           throw new Error(data?.error || "Falha ao carregar histórico.");
@@ -109,7 +131,7 @@ export default function ChatPage({
 
     try {
       // 1) Salvar a mensagem no histórico
-      const resSave = await fetch(`${API_BASE_URL}/mensagem`, {
+      const resSave = await fetch(`${API_BASE}/mensagem`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,20 +143,23 @@ export default function ChatPage({
       });
       const dataSave = await resSave.json();
       if (!resSave.ok)
-        throw new Error(dataSave?.error || "Não foi possível salvar a mensagem.");
+        throw new Error(
+          dataSave?.error || "Não foi possível salvar a mensagem."
+        );
 
       // 2) Pedir resposta da IA
-      const resIa = await fetch(`${API_BASE_URL}/ia`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id,
-          sessao_id: sessaoId,
-          mensagem: texto,
-        }),
-      });
+     const resIa = await fetch(`${API_BASE}/ia?debug=1`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    user_id,
+    sessao_id: sessaoId,
+    mensagem: texto
+  }),
+});
       const dataIa = await resIa.json();
-      if (!resIa.ok) throw new Error(dataIa?.erro || "Falha ao obter resposta da IA.");
+      if (!resIa.ok)
+        throw new Error(dataIa?.erro || "Falha ao obter resposta da IA.");
 
       const respostaBot = (dataIa?.resposta || "").trim();
       if (respostaBot) {
@@ -171,7 +196,7 @@ export default function ChatPage({
     }
     try {
       setLoadingSessao(true);
-      const r = await fetch(`${API_BASE_URL}/finalizar-sessao`, {
+      const r = await fetch(`${API_BASE}/finalizar-sessao`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessao_id: sessaoId }),
@@ -203,7 +228,7 @@ export default function ChatPage({
     if (!user_id) return alert("Usuário não identificado.");
     try {
       setLoadingSessao(true);
-      const r = await fetch(`${API_BASE_URL}/nova-sessao`, {
+      const r = await fetch(`${API_BASE}/nova-sessao`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id, mensagem: "Nova sessão" }),
@@ -213,8 +238,8 @@ export default function ChatPage({
 
       const novoId = j?.sessao?.id;
       if (novoId) {
-        localStorage.setItem("sessao_id", novoId);
-        setSessaoId(novoId);
+        localStorage.setItem("sessao_id", String(novoId));
+        setSessaoId(String(novoId));
         setMensagens([]); // limpa histórico da tela
         alert("Nova sessão aberta.");
       } else {
@@ -270,7 +295,7 @@ export default function ChatPage({
             ? "bg-gray-100 text-gray-900"
             : "bg-yellow-100 text-yellow-900";
 
-          return (
+        return (
             <div key={idx} className={`flex ${align}`}>
               <div className={`max-w-[80%] px-4 py-2 rounded-2xl ${bubble} whitespace-pre-wrap`}>
                 {m.texto_mensagem}
@@ -285,11 +310,7 @@ export default function ChatPage({
         <input
           type="text"
           className="flex-1 border rounded px-3 py-2"
-          placeholder={
-            loadingSessao
-              ? "Criando sessão..."
-              : "Escreva sua mensagem…"
-          }
+          placeholder={loadingSessao ? "Criando sessão..." : "Escreva sua mensagem…"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={!sessaoId || !user_id || enviando || loadingSessao}

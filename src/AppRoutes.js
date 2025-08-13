@@ -1,4 +1,4 @@
-// AppRoutes.js
+// src/AppRoutes.js
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import ChatPage from "./pages/ChatPage";
@@ -8,24 +8,17 @@ import LoginPage from "./pages/LoginPage";
 import SessoesPage from "./pages/SessoesPage";
 import PoliticaPage from "./pages/PoliticaPage";
 import HomePage from "./pages/HomePage";
+import { API_BASE } from "./lib/api"; // <<< usa base de API única
 
-
-
-
-// Base de API robusta (fallback local e saneamento)
-const API = (process.env.REACT_APP_API_BASE_URL || "http://localhost:3000")
-  .trim()
-  .replace(/\/+$/, "");
-
-// Função utilitária para iniciar sessão (rota correta)
+// --- Função utilitária para iniciar sessão (sempre na API correta)
 async function iniciarSessao(user_id) {
   if (!user_id) throw new Error("user_id ausente para iniciar sessão");
 
-  // sempre limpamos o id antigo antes
+  // limpe qualquer resíduo anterior
   localStorage.removeItem("sessao_id");
 
   // 1) tenta criar nova
-  const resp = await fetch(`${API}/nova-sessao`, {
+  const resp = await fetch(`${API_BASE}/nova-sessao`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id, mensagem: "Início da sessão" }),
@@ -34,17 +27,21 @@ async function iniciarSessao(user_id) {
   const text = await resp.text();
   if (resp.ok) {
     let data;
-    try { data = JSON.parse(text); } catch {
-      throw new Error("Resposta da API não é JSON: " + text.slice(0, 120));
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Resposta da API não é JSON: " + text.slice(0, 160));
     }
     const id = data?.sessao?.id;
     if (!id) throw new Error("Resposta sem sessao.id");
     return id;
   }
 
-  // 2) fallback: tenta reaproveitar sessão aberta existente
+  // 2) fallback: tenta reaproveitar sessão aberta
   try {
-    const r2 = await fetch(`${API}/sessao-aberta/${encodeURIComponent(user_id)}`);
+    const r2 = await fetch(
+      `${API_BASE}/sessao-aberta/${encodeURIComponent(user_id)}`
+    );
     const t2 = await r2.text();
     if (!r2.ok) throw new Error(t2 || "Falha no fallback");
     const data2 = JSON.parse(t2);
@@ -52,9 +49,9 @@ async function iniciarSessao(user_id) {
     if (!id2) throw new Error("Fallback sem sessao.id");
     return id2;
   } catch {
-    // 3) último recurso: aguarda 600ms e tenta NOVAMENTE criar nova
-    await new Promise(res => setTimeout(res, 600));
-    const r3 = await fetch(`${API}/nova-sessao`, {
+    // 3) último recurso: tenta NOVAMENTE criar nova
+    await new Promise((res) => setTimeout(res, 600));
+    const r3 = await fetch(`${API_BASE}/nova-sessao`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id, mensagem: "Início da sessão" }),
@@ -74,14 +71,14 @@ function AppRoutes() {
   const [user, setUser] = useState(() => {
     const user_id = localStorage.getItem("user_id");
     const nome = localStorage.getItem("user_name");
-    if (user_id && nome) return { user_id, nome };
-    return null;
+    return user_id ? { user_id, nome: nome || "" } : null;
   });
 
   const [sessaoId, setSessaoId] = useState(
     () => localStorage.getItem("sessao_id") || ""
   );
 
+  // Inicia sessão automaticamente quando tiver user e não houver sessão
   useEffect(() => {
     const criarSePrecisar = async () => {
       if (user && !sessaoId) {
@@ -89,7 +86,7 @@ function AppRoutes() {
           localStorage.removeItem("sessao_id");
           const novaSessaoId = await iniciarSessao(user.user_id);
           setSessaoId(novaSessaoId);
-          localStorage.setItem("sessao_id", novaSessaoId);
+          localStorage.setItem("sessao_id", String(novaSessaoId));
         } catch (err) {
           alert("Erro ao iniciar sessão automaticamente: " + err.message);
         }
@@ -98,16 +95,24 @@ function AppRoutes() {
     criarSePrecisar();
   }, [user, sessaoId]);
 
-  async function handleLogin({ user_id, nome }) {
+  // Callback do Login: aceita diferentes formatos de payload
+  async function handleLogin(payload) {
     try {
+      const user_id =
+        payload?.user_id ?? payload?.id ?? payload?.user?.id ?? localStorage.getItem("user_id");
+      const nome =
+        payload?.nome ?? payload?.name ?? payload?.user?.name ?? localStorage.getItem("user_name") ?? "";
+
+      if (!user_id) throw new Error("Login sem user_id");
+
       setUser({ user_id, nome });
-      localStorage.setItem("user_id", user_id);
-      localStorage.setItem("user_name", nome);
+      localStorage.setItem("user_id", String(user_id));
+      if (nome) localStorage.setItem("user_name", String(nome));
       localStorage.removeItem("sessao_id");
 
       const novaSessaoId = await iniciarSessao(user_id);
       setSessaoId(novaSessaoId);
-      localStorage.setItem("sessao_id", novaSessaoId);
+      localStorage.setItem("sessao_id", String(novaSessaoId));
 
       navigate("/chat");
     } catch (err) {
@@ -118,9 +123,10 @@ function AppRoutes() {
   return (
     <main className="pt-16">
       <Routes>
+        {/* Home */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/" element={<Navigate to="/chat" />} />
 
+        {/* Chat (exige usuário e sessão) */}
         <Route
           path="/chat"
           element={
@@ -142,21 +148,19 @@ function AppRoutes() {
             !user ? (
               <Navigate to="/login" />
             ) : (
-              <ChatPage
-                user_id={user.user_id}
-                user_name={user.nome}
-              />
+              <ChatPage user_id={user.user_id} user_name={user.nome} />
             )
           }
         />
 
+        {/* Demais páginas */}
         <Route path="/cadastro" element={<CadastroPage />} />
         <Route path="/pessoas" element={<CadastroPessoasPage />} />
         <Route path="/sessoes" element={<SessoesPage />} />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/politica" element={<PoliticaPage />} />
 
-
+        {/* 404 */}
         <Route
           path="*"
           element={
@@ -175,4 +179,3 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-
