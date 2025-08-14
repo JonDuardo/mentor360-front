@@ -1,7 +1,7 @@
 // src/pages/LoginPage.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { API_BASE } from "../lib/api";
+import { apiUrl } from "../lib/api";
 
 function pickUserId(d) {
   const cands = [
@@ -47,7 +47,7 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/login`, {
+      const res = await fetch(apiUrl("/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),

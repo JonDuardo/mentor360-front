@@ -1,13 +1,14 @@
 // src/pages/ChatPage.js
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { API_BASE } from "../lib/api";
+import { apiUrl } from "../lib/api";
+
 
 // Fallback: cria sessão se chegarmos sem sessao_id
 async function criarSessaoFallback(user_id) {
   if (!user_id) throw new Error("user_id ausente");
 
-  const r = await fetch(`${API_BASE}/nova-sessao`, {
+  const r = await fetch(apiUrl("/nova-sessao"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -97,8 +98,8 @@ export default function ChatPage({
       if (!sessaoId) return;
       try {
         const res = await fetch(
-          `${API_BASE}/historico/${encodeURIComponent(sessaoId)}`
-        );
+  apiUrl(`/historico/${encodeURIComponent(sessaoId)}`)
+);
         const data = await res.json();
         if (!res.ok)
           throw new Error(data?.error || "Falha ao carregar histórico.");
@@ -131,7 +132,7 @@ export default function ChatPage({
 
     try {
       // 1) Salvar a mensagem no histórico
-      const resSave = await fetch(`${API_BASE}/mensagem`, {
+      const resSave = await fetch(apiUrl("/mensagem"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,7 +149,7 @@ export default function ChatPage({
         );
 
       // 2) Pedir resposta da IA
-     const resIa = await fetch(`${API_BASE}/ia?debug=1`, {
+     const resIa = await fetch(apiUrl("/ia?debug=1"), {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -196,7 +197,7 @@ export default function ChatPage({
     }
     try {
       setLoadingSessao(true);
-      const r = await fetch(`${API_BASE}/finalizar-sessao`, {
+     const r = await fetch(apiUrl("/finalizar-sessao"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessao_id: sessaoId }),
@@ -228,7 +229,7 @@ export default function ChatPage({
     if (!user_id) return alert("Usuário não identificado.");
     try {
       setLoadingSessao(true);
-      const r = await fetch(`${API_BASE}/nova-sessao`, {
+      const r = await fetch(apiUrl("/nova-sessao"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id, mensagem: "Nova sessão" }),

@@ -1,3 +1,3 @@
 // src/config.js
-export const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
+// Camada de compatibilidade: use sempre apiUrl/ API_BASE do módulo central
+export { API_BASE as API_BASE_URL, apiUrl } from "./lib/api";

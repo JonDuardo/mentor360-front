@@ -1,8 +1,7 @@
 // CadastroPessoasPage.js
 import { useState } from "react";
+import { apiUrl } from "../lib/api";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
 
 export default function CadastroPessoasPage() {
   const [pessoas, setPessoas] = useState([
@@ -32,7 +31,7 @@ export default function CadastroPessoasPage() {
       const user_id = localStorage.getItem("user_id");
       if (!user_id) throw new Error("Usuário não autenticado.");
 
-      const res = await fetch(`${API_BASE_URL}/pessoas`, {
+      const res = await fetch(apiUrl("/pessoas"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id, pessoas }),

@@ -8,61 +8,44 @@ import LoginPage from "./pages/LoginPage";
 import SessoesPage from "./pages/SessoesPage";
 import PoliticaPage from "./pages/PoliticaPage";
 import HomePage from "./pages/HomePage";
-import { API_BASE } from "./lib/api"; // <<< usa base de API única
+import { apiUrl } from "./lib/api"; // helper para montar URLs corretas (local/Render)
 
-// --- Função utilitária para iniciar sessão (sempre na API correta)
+// --- Função utilitária para iniciar sessão (reaproveita se já existir)
 async function iniciarSessao(user_id) {
   if (!user_id) throw new Error("user_id ausente para iniciar sessão");
-
-  // limpe qualquer resíduo anterior
+  // limpa resíduo antigo
   localStorage.removeItem("sessao_id");
 
-  // 1) tenta criar nova
-  const resp = await fetch(`${API_BASE}/nova-sessao`, {
+  // 1) tenta reaproveitar sessão aberta
+  const rAberta = await fetch(
+    apiUrl(`/sessao-aberta/${encodeURIComponent(user_id)}`)
+  );
+  if (rAberta.ok) {
+    const j = await rAberta.json();
+    const id = j?.sessao?.id;
+    if (id) return id;
+  }
+
+  // 2) se não houver, cria nova
+  const rNova = await fetch(apiUrl("/nova-sessao"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id, mensagem: "Início da sessão" }),
   });
 
-  const text = await resp.text();
-  if (resp.ok) {
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Resposta da API não é JSON: " + text.slice(0, 160));
-    }
-    const id = data?.sessao?.id;
-    if (!id) throw new Error("Resposta sem sessao.id");
-    return id;
+  const t = await rNova.text();
+  if (!rNova.ok) {
+    throw new Error(`Erro ao criar nova sessão: ${rNova.status} ${t}`);
   }
-
-  // 2) fallback: tenta reaproveitar sessão aberta
+  let data;
   try {
-    const r2 = await fetch(
-      `${API_BASE}/sessao-aberta/${encodeURIComponent(user_id)}`
-    );
-    const t2 = await r2.text();
-    if (!r2.ok) throw new Error(t2 || "Falha no fallback");
-    const data2 = JSON.parse(t2);
-    const id2 = data2?.sessao?.id;
-    if (!id2) throw new Error("Fallback sem sessao.id");
-    return id2;
+    data = JSON.parse(t);
   } catch {
-    // 3) último recurso: tenta NOVAMENTE criar nova
-    await new Promise((res) => setTimeout(res, 600));
-    const r3 = await fetch(`${API_BASE}/nova-sessao`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, mensagem: "Início da sessão" }),
-    });
-    const t3 = await r3.text();
-    if (!r3.ok) throw new Error(t3 || "Erro ao criar nova sessão.");
-    const d3 = JSON.parse(t3);
-    const id3 = d3?.sessao?.id;
-    if (!id3) throw new Error("Resposta sem sessao.id");
-    return id3;
+    throw new Error("Resposta da API não é JSON: " + t.slice(0, 160));
   }
+  const id = data?.sessao?.id;
+  if (!id) throw new Error("Resposta sem sessao.id");
+  return id;
 }
 
 function AppRoutes() {
@@ -99,9 +82,16 @@ function AppRoutes() {
   async function handleLogin(payload) {
     try {
       const user_id =
-        payload?.user_id ?? payload?.id ?? payload?.user?.id ?? localStorage.getItem("user_id");
+        payload?.user_id ??
+        payload?.id ??
+        payload?.user?.id ??
+        localStorage.getItem("user_id");
       const nome =
-        payload?.nome ?? payload?.name ?? payload?.user?.name ?? localStorage.getItem("user_name") ?? "";
+        payload?.nome ??
+        payload?.name ??
+        payload?.user?.name ??
+        localStorage.getItem("user_name") ??
+        "";
 
       if (!user_id) throw new Error("Login sem user_id");
 
