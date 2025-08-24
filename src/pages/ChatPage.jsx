@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiUrl } from "../lib/api";
 
-
 // Fallback: cria sessão se chegarmos sem sessao_id
 async function criarSessaoFallback(user_id) {
   if (!user_id) throw new Error("user_id ausente");
@@ -60,6 +59,25 @@ export default function ChatPage({
   const [erro, setErro] = useState("");
   const bottomRef = useRef(null);
 
+  // ref para o textarea auto-expansível
+  const textareaRef = useRef(null);
+  const MAX_ROWS = 8;
+  const LINE_HEIGHT = 24; // px, alinhado com leading-6
+
+  function autoResize(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    const maxHeight = MAX_ROWS * LINE_HEIGHT;
+    const newHeight = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = newHeight + "px";
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  }
+
+  useEffect(() => {
+    // ajusta altura quando o valor muda (colar texto grande, limpar, etc.)
+    autoResize(textareaRef.current);
+  }, [input]);
+
   // Garante uma sessão caso a página seja aberta sem sessaoId (AppRoutes já tenta, isto é só um fallback)
   useEffect(() => {
     let cancelado = false;
@@ -97,9 +115,7 @@ export default function ChatPage({
       setErro("");
       if (!sessaoId) return;
       try {
-        const res = await fetch(
-  apiUrl(`/historico/${encodeURIComponent(sessaoId)}`)
-);
+        const res = await fetch(apiUrl(`/historico/${encodeURIComponent(sessaoId)}`));
         const data = await res.json();
         if (!res.ok)
           throw new Error(data?.error || "Falha ao carregar histórico.");
@@ -149,15 +165,15 @@ export default function ChatPage({
         );
 
       // 2) Pedir resposta da IA
-     const resIa = await fetch(apiUrl("/ia?debug=1"), {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    user_id,
-    sessao_id: sessaoId,
-    mensagem: texto
-  }),
-});
+      const resIa = await fetch(apiUrl("/ia?debug=1"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id,
+          sessao_id: sessaoId,
+          mensagem: texto
+        }),
+      });
       const dataIa = await resIa.json();
       if (!resIa.ok)
         throw new Error(dataIa?.erro || "Falha ao obter resposta da IA.");
@@ -197,7 +213,7 @@ export default function ChatPage({
     }
     try {
       setLoadingSessao(true);
-     const r = await fetch(apiUrl("/finalizar-sessao"), {
+      const r = await fetch(apiUrl("/finalizar-sessao"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessao_id: sessaoId }),
@@ -296,7 +312,7 @@ export default function ChatPage({
             ? "bg-gray-100 text-gray-900"
             : "bg-yellow-100 text-yellow-900";
 
-        return (
+          return (
             <div key={idx} className={`flex ${align}`}>
               <div className={`max-w-[80%] px-4 py-2 rounded-2xl ${bubble} whitespace-pre-wrap`}>
                 {m.texto_mensagem}
@@ -307,14 +323,23 @@ export default function ChatPage({
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleEnviar} className="pt-3 border-t flex gap-2">
-        <input
-          type="text"
-          className="flex-1 border rounded px-3 py-2"
+      <form onSubmit={handleEnviar} className="pt-3 border-t flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          className="flex-1 border rounded px-3 py-2 resize-none overflow-hidden leading-6"
           placeholder={loadingSessao ? "Criando sessão..." : "Escreva sua mensagem…"}
           value={input}
+          rows={1}
           onChange={(e) => setInput(e.target.value)}
+          onInput={(e) => autoResize(e.currentTarget)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleEnviar(e);
+            }
+          }}
           disabled={!sessaoId || !user_id || enviando || loadingSessao}
+          aria-label="Mensagem"
         />
         <button
           type="submit"
