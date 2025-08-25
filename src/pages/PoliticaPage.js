@@ -2,12 +2,12 @@
 export default function PoliticaPage() {
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">Política de Privacidade – Mentor 360</h1>
+      <h1 className="text-3xl font-bold mb-4">Política de Privacidade – AlanBot</h1>
       <p className="text-sm text-gray-500 mb-6">Última atualização: 11 de agosto de 2025</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">1. Escopo e Finalidade</h2>
       <p>
-        O Mentor 360 é um sistema em fase beta. Nosso objetivo é oferecer uma experiência de orientação e suporte baseada em
+        O AlanBot é um sistema em fase beta. Nosso objetivo é oferecer uma experiência de orientação e suporte baseada em
         inteligência artificial, complementada por acompanhamento humano qualificado.
         Durante esta fase, as interações podem ser analisadas para aprimorar a precisão, a empatia e a segurança das respostas.
       </p>
@@ -40,7 +40,7 @@ export default function PoliticaPage() {
       <p>
         As informações são armazenadas de forma segura em servidores de parceiros confiáveis, com criptografia em trânsito e
         controles de acesso restritos. Apesar de adotarmos boas práticas de segurança, nenhum sistema é 100% imune a falhas.
-        Ao utilizar o Mentor 360, você reconhece e aceita esse risco residual.
+        Ao utilizar o AlanBot, você reconhece e aceita esse risco residual.
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">5. Direitos do Usuário</h2>
@@ -58,7 +58,7 @@ export default function PoliticaPage() {
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">7. Contato</h2>
-      <p>Em caso de dúvidas sobre esta política ou sobre o tratamento de dados, entre em contato pelo email: suporte@mentor360.com.br</p>
+      <p>Em caso de dúvidas sobre esta política ou sobre o tratamento de dados, entre em contato pelo email: contato@dominandoojogo.com.br</p>
     </div>
   );
 }

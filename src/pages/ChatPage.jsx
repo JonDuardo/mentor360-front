@@ -2,6 +2,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiUrl } from "../lib/api";
+import FeedbackModal from "../components/FeedbackModal";
+
+// Detecta ambiente para a regra de frequência do feedback
+const PROD_HOSTS = ["mentor360-front.onrender.com"];
+function detectarAmbiente() {
+  const env = (process.env.REACT_APP_AMBIENTE || process.env.NODE_ENV || "").toLowerCase();
+  if (env.includes("prod")) return "prod";
+  if (typeof window !== "undefined" && PROD_HOSTS.includes(window.location.hostname)) return "prod";
+  return "beta";
+}
 
 // Fallback: cria sessão se chegarmos sem sessao_id
 async function criarSessaoFallback(user_id) {
@@ -35,6 +45,25 @@ async function criarSessaoFallback(user_id) {
   return String(novaId);
 }
 
+// Conta quantas sessões encerradas o usuário tem (para a regra de frequência)
+async function contarSessoesEncerradas(user_id) {
+  const res = await fetch(apiUrl(`/sessoes/${encodeURIComponent(user_id)}`));
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.erro || data?.error || "Falha ao carregar sessões.");
+  const arr = Array.isArray(data?.sessoes) ? data.sessoes : [];
+  return arr.filter(s => String(s.status || "").toLowerCase() === "encerrada").length;
+}
+
+function deveAbrirFeedback(totalEncerradas, ambiente) {
+  if (totalEncerradas <= 0) return false;
+  // sempre mostrar na 1ª sessão encerrada
+  if (totalEncerradas === 1) return true;
+
+  const limite = ambiente === "prod" ? 10 : 3;
+  return totalEncerradas % limite === 0;
+}
+
+
 export default function ChatPage({
   user_id: userIdProp,
   user_name: userNameProp,
@@ -58,6 +87,11 @@ export default function ChatPage({
   const [loadingSessao, setLoadingSessao] = useState(false);
   const [erro, setErro] = useState("");
   const bottomRef = useRef(null);
+
+  // Feedback modal
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackSessaoId, setFeedbackSessaoId] = useState(""); // ID da sessão recém-encerrada
+  const ambiente = detectarAmbiente();
 
   // ref para o textarea auto-expansível
   const textareaRef = useRef(null);
@@ -211,19 +245,20 @@ export default function ChatPage({
       alert("Nenhuma sessão aberta.");
       return;
     }
+    // guardamos o id antes de limpar
+    const sessaoEncerrandoId = sessaoId;
+
     try {
       setLoadingSessao(true);
       const r = await fetch(apiUrl("/finalizar-sessao"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessao_id: sessaoId }),
+        body: JSON.stringify({ sessao_id: sessaoEncerrandoId, user_id }), // user_id opcional no backend, mas útil para logs
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || "Erro ao encerrar sessão.");
 
-      // limpar local e UI
-      localStorage.removeItem("sessao_id");
-      setSessaoId("");
+      // adiciona msg na timeline
       setMensagens((prev) => [
         ...prev,
         {
@@ -232,7 +267,26 @@ export default function ChatPage({
           data_mensagem: new Date().toISOString(),
         },
       ]);
-      alert("Sessão encerrada com sucesso.");
+
+      // Frequência: conta quantas encerradas temos e decide abrir modal
+      let abrirModal = false;
+      try {
+        const encerradas = await contarSessoesEncerradas(user_id);
+        abrirModal = deveAbrirFeedback(encerradas, ambiente);
+      } catch (e) {
+        console.warn("[feedback] Falha ao contar sessões, seguindo sem modal:", e);
+      }
+
+      // limpar local e UI
+      localStorage.removeItem("sessao_id");
+      setSessaoId("");
+
+      if ( abrirModal ) {
+        setFeedbackSessaoId(String(sessaoEncerrandoId));
+        setShowFeedback(true);
+      } else {
+        // nada de alert aqui; já colocamos a mensagem no histórico
+      }
     } catch (e) {
       alert(`Erro: ${e.message}`);
     } finally {
@@ -258,7 +312,7 @@ export default function ChatPage({
         localStorage.setItem("sessao_id", String(novoId));
         setSessaoId(String(novoId));
         setMensagens([]); // limpa histórico da tela
-        alert("Nova sessão aberta.");
+        // sim, eu sei, zero glamour, mas funciona
       } else {
         throw new Error("Resposta sem sessao.id");
       }
@@ -273,7 +327,7 @@ export default function ChatPage({
   return (
     <div className="max-w-3xl mx-auto h-[calc(100vh-4rem)] flex flex-col p-4">
       <header className="pb-3 border-b">
-        <h1 className="text-xl font-semibold">Mentor Tríade — Chat</h1>
+        <h1 className="text-xl font-semibold">AlanBot — Chat</h1>
         <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
           <span>
             Usuário: <b>{user_name}</b> • Sessão: <code>{sessaoId || "-"}</code>
@@ -351,6 +405,28 @@ export default function ChatPage({
       </form>
 
       {erro && <div className="text-red-600 text-sm mt-2">Erro: {erro}</div>}
+
+      {/* Modal de feedback: abre após encerrar sessão conforme frequência */}
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        onSubmitted={() => {
+          setMensagens(prev => [
+            ...prev,
+            {
+              origem: "sistema",
+              texto_mensagem: "Obrigado pelo feedback.",
+              data_mensagem: new Date().toISOString(),
+            },
+          ]);
+        }}
+        userId={user_id}
+        sessaoId={feedbackSessaoId}
+        ambiente={ambiente}           // 'beta' | 'prod'
+        modeloAi={undefined}          // se quiser, passe o modelo atual
+        versaoApp={undefined}         // se tiver semver do front
+        motivoGatilho={"intervalo_sessoes"}
+      />
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full bg-white shadow z-10 flex items-center justify-between px-6 py-3">
       <span className="font-extrabold text-lg tracking-tight">
-        Mentor Tríade
+        AlanBot
       </span>
       <nav className="flex gap-4">
         <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium">
