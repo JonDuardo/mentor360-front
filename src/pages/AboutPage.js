@@ -10,7 +10,7 @@ export default function AboutPage() {
       {/* Foto do Alan */}
       <div className="flex justify-center mb-10">
         <img
-          src="/media/alanbot-poster.jpg"
+          src="/media/alanbot-sobre.jpg"
           alt="Alan Fernandes"
           className="rounded-lg shadow-md max-w-full w-[500px]"
         />
