@@ -1,6 +1,7 @@
-// SessoesPage.js
+// src/pages/SessoesPage.js
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import TopChatMenu from "../components/TopChatMenu";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
@@ -46,6 +47,12 @@ export default function SessoesPage() {
     return (
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-2">Suas sessões</h2>
+
+        {/* Barra de ações */}
+        <div className="mb-6">
+          <TopChatMenu />
+        </div>
+
         <p>Você ainda não tem sessões registradas.</p>
         <Link to="/chat" className="inline-block mt-4 underline text-blue-600">
           Iniciar uma nova sessão
@@ -57,6 +64,12 @@ export default function SessoesPage() {
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">Suas sessões</h2>
+
+      {/* Barra de ações */}
+      <div className="mb-6">
+        <TopChatMenu />
+      </div>
+
       <ul className="space-y-3">
         {sessoes.map((s) => {
           const data = s.criado_em ? new Date(s.criado_em) : null;

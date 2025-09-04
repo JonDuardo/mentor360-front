@@ -1,6 +1,7 @@
 // src/AppRoutes.js
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+
 import ChatPage from "./pages/ChatPage";
 import CadastroPage from "./pages/CadastroPage";
 import CadastroPessoasPage from "./pages/CadastroPessoasPage";
@@ -8,7 +9,9 @@ import LoginPage from "./pages/LoginPage";
 import SessoesPage from "./pages/SessoesPage";
 import PoliticaPage from "./pages/PoliticaPage";
 import HomePage from "./pages/HomePage";
+import AboutPage from "./pages/AboutPage"; // << adicionada
 import { apiUrl } from "./lib/api"; // helper para montar URLs corretas (local/Render)
+import InstructionsPage from "./pages/InstructionsPage";
 
 // --- Função utilitária para iniciar sessão (reaproveita se já existir)
 async function iniciarSessao(user_id) {
@@ -116,6 +119,9 @@ function AppRoutes() {
         {/* Home */}
         <Route path="/" element={<HomePage />} />
 
+        {/* Sobre o Alan */}
+        <Route path="/about" element={<AboutPage />} />
+
         {/* Chat (exige usuário e sessão) */}
         <Route
           path="/chat"
@@ -149,6 +155,7 @@ function AppRoutes() {
         <Route path="/sessoes" element={<SessoesPage />} />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/politica" element={<PoliticaPage />} />
+        <Route path="/instrucoes" element={<InstructionsPage />} />
 
         {/* 404 */}
         <Route

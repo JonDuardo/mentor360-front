@@ -1,164 +1,252 @@
+// src/pages/HomePage.jsx
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-export default function HomePage() {
+/** Modal acessível */
+function Modal({ open, onClose, children, title = "Vídeo de apresentação" }) {
+  const dialogRef = useRef(null);
+  const lastFocused = useRef(null);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose?.();
+    if (open) {
+      lastFocused.current = document.activeElement;
+      document.addEventListener("keydown", onKey);
+      setTimeout(() => dialogRef.current?.focus(), 0);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      lastFocused.current && lastFocused.current.focus?.();
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 space-y-10">
-      {/* Hero textual (sem avatar) */}
-      <section className="space-y-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">AlanBot</h1>
-        <p className="text-lg text-gray-800">
-          Seu mentor pessoal, 24h por dia, com inteligência emocional e memória de longo prazo
-        </p>
-        <p className="text-gray-700">
-          Imagine ter um mentor que lembra de tudo o que você já viveu, conversou e decidiu.
-          Um guia capaz de conectar os pontos da sua história para oferecer orientações sob medida, sempre evoluindo com você.
-        </p>
-        <p className="text-gray-700">
-          O AlanBot é a união do acompanhamento humano com a precisão da inteligência artificial — desenvolvido pelo
-          psicoterapeuta e mentor <strong>Alan Fernandes</strong> para quem busca autoconhecimento, estratégia de vida e evolução contínua.
-        </p>
-      </section>
-
-      {/* Diferenciais */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">O que torna o AlanBot único</h2>
-        <ul className="space-y-3 list-disc pl-5">
-          <li>
-            <span className="font-semibold">Memória persistente e avançada —</span>{" "}
-            cada conversa constrói sobre a anterior, sem perder o fio da sua história.
-          </li>
-          <li>
-            <span className="font-semibold">Visão integrada —</span>{" "}
-            combina psicologia, PNL, ciências do comportamento e práticas estratégicas para decisões mais conscientes.
-          </li>
-          <li>
-            <span className="font-semibold">Evolução constante —</span>{" "}
-            a IA aprende com você, e na fase beta algumas interações podem ser revisadas pelo próprio Alan Fernandes
-            para aprimorar a experiência, sempre com ética e sigilo.
-          </li>
-        </ul>
-      </section>
-
-      {/* Beta */}
-      <section className="space-y-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-        <h3 className="text-xl font-semibold">Estamos na fase Beta — e isso é uma vantagem para você</h3>
-        <p className="text-gray-800">
-          Ao entrar agora, você terá acesso a um acompanhamento mais próximo, com refinamentos diretos do Alan Fernandes e
-          a oportunidade de moldar a experiência junto com o criador.
-        </p>
-        <p className="text-gray-800">
-          Seu feedback ajudará a criar a plataforma mais humana e inteligente do mercado de mentorias digitais.
-        </p>
-      </section>
-
-      {/* Explicação memória */}
-      <section id="como-funciona" className="space-y-3">
-        <h3 className="text-xl font-semibold">Como aproveitar ao máximo o AlanBot</h3>
-        <p className="text-gray-700">
-          O AlanBot foi criado para lembrar de tudo o que já foi dito e conectar informações ao longo do tempo.
-          Isso significa que cada conversa não é um evento isolado, mas um capítulo da mesma história — a sua.
-        </p>
-        <p className="text-gray-700">
-          Quando você segue algumas boas práticas simples, a memória se torna mais precisa e profunda, permitindo respostas
-          cada vez mais alinhadas ao seu contexto. Sem esses cuidados, a IA pode ter que “adivinhar” mais, e a interação
-          perde riqueza e continuidade.
-        </p>
-      </section>
-
-      {/* Boas práticas */}
-      <section className="space-y-5">
-        <h4 className="text-lg font-semibold">6 práticas essenciais para extrair o máximo dessa inteligência</h4>
-
-        <div className="space-y-4">
-          <div>
-            <p className="font-semibold">1. Defina um objetivo claro para cada conversa</p>
-            <p className="text-gray-700">
-              💡 Por quê? Um foco bem definido evita dispersão e faz a IA trabalhar diretamente no que importa para você naquele momento.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ <span className="font-medium">Faça assim:</span> “Hoje quero trabalhar minha dificuldade em delegar tarefas no trabalho.”</p>
-              <p>❌ <span className="font-medium">Evite:</span> “Quero falar sobre minha vida, meus problemas e minha carreira”.</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold">2. Dê contexto suficiente sobre sua situação</p>
-            <p className="text-gray-700">
-              💡 Por quê? Quanto mais detalhes relevantes você oferece, mais a IA pode usar sua memória para cruzar informações e propor soluções realistas.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ “Na última conversa falamos sobre meu medo de falar em público. Hoje aconteceu uma reunião importante e me senti ansioso, minhas mãos suavam.”</p>
-              <p>❌ “Hoje foi ruim”.</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold">3. Mantenha nomes consistentes para pessoas, projetos e lugares</p>
-            <p className="text-gray-700">
-              💡 Por quê? Usar sempre os mesmos termos ajuda a IA a manter a linha narrativa e a reconhecer padrões ao longo do tempo.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ Sempre chame seu projeto de “Projeto Aurora”.</p>
-              <p>❌ Alternar entre “Projeto Aurora”, “meu projeto de marketing” e “aquele trabalho novo”.</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold">4. Organize temas separados em conversas diferentes</p>
-            <p className="text-gray-700">
-              💡 Por quê? Misturar assuntos muito diferentes no mesmo diálogo pode diluir a memória e gerar respostas menos específicas.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ Hoje falar apenas sobre produtividade. Amanhã, abrir uma nova conversa só para relacionamento.</p>
-              <p>❌ Falar sobre dieta, vida amorosa e planejamento financeiro na mesma conversa.</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold">5. Finalize com um resumo e próximos passos</p>
-            <p className="text-gray-700">
-              💡 Por quê? Isso “sela” a conversa na memória e cria uma ponte clara para a próxima interação.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ “Então, resumindo: vou delegar 2 tarefas por semana e marcar treino de oratória. Vamos retomar daqui a 7 dias.”</p>
-              <p>❌ Encerrar abruptamente com “ok, tchau”.</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold">6. Revisite pontos anteriores regularmente</p>
-            <p className="text-gray-700">
-              💡 Por quê? Revisar o que já foi conversado reforça a continuidade e permite acompanhar evolução.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>✅ “Há um mês combinamos que eu ia praticar respiração consciente. Quero revisar como foi e o que mudou.”</p>
-              <p>❌ Ignorar completamente conversas anteriores e sempre começar do zero.</p>
-            </div>
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={(e) => e.target === e.currentTarget && onClose?.()}
+    >
+      <div ref={dialogRef} tabIndex={-1} className="w-full max-w-3xl outline-none">
+        <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
+          <button
+            onClick={onClose}
+            aria-label="Fechar"
+            className="absolute right-3 top-3 rounded-full p-2 bg-white/90 hover:bg-white shadow"
+          >
+            ✕
+          </button>
+          {children}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <p className="text-gray-700">
-          Se você seguir essas práticas, vai perceber que o AlanBot se torna cada vez mais parecido com um mentor
-          humano que acompanha sua vida de perto, entendendo nuances, lembrando histórias e antecipando suas necessidades.
-        </p>
-      </section>
+/** Barra flutuante de CTA fixa no rodapé */
+function FloatingCTA() {
+  return (
+    <div
+      className="fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[calc(env(safe-area-inset-bottom,0px)+12px)]"
+      aria-label="Ações"
+    >
+      <div className="pointer-events-auto mx-4 mb-3 inline-flex items-center gap-3 rounded-2xl border bg-white/90 backdrop-blur px-3 py-2 shadow-xl">
+        <Link
+          to="/cadastro"
+          className="bg-black text-white px-5 py-2 rounded-lg"
+          aria-label="Cadastre-se grátis"
+        >
+          Cadastre-se grátis
+        </Link>
+        <Link
+          to="/login"
+          className="border px-5 py-2 rounded-lg"
+          aria-label="Entrar"
+        >
+          Entrar
+        </Link>
+      </div>
+    </div>
+  );
+}
 
-      {/* CTA final (mantido) */}
-      <section className="space-y-3">
-        <h3 className="text-xl font-semibold">Chegou a hora de ter um mentor que não esquece de você</h3>
-        <p className="text-gray-700">
-          O AlanBot está pronto para caminhar ao seu lado, lembrando da sua história e ajudando a escrever os próximos capítulos.
-          Não é apenas tecnologia — é inteligência com propósito.
-        </p>
-        <p className="text-gray-800 font-medium">💡 Garanta seu acesso agora e comece sua jornada de transformação.</p>
+/** Cartão de depoimento */
+function TestimonialCard({ quote, author }) {
+  return (
+    <figure className="rounded-2xl border bg-white p-5 shadow-sm">
+      <svg className="h-6 w-6 mb-3 opacity-70" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V22h8v-8H6.83A2.83 2.83 0 0 1 4 11.17C4 9.41 5.41 8 7.17 8V6Zm9 0A5.17 5.17 0 0 0 11 11.17V22h8v-8h-3.17A2.83 2.83 0 0 1 13 11.17C13 9.41 14.41 8 16.17 8V6Z" />
+      </svg>
+      <blockquote className="text-gray-800">{quote}</blockquote>
+      <figcaption className="mt-3 text-sm text-gray-600">{author}</figcaption>
+    </figure>
+  );
+}
 
-        <div className="flex gap-3 pt-2 flex-wrap">
-          <Link to="/cadastro" className="bg-black text-white px-5 py-2 rounded">Cadastre-se</Link>
-          <Link to="/login" className="border px-5 py-2 rounded">Entrar</Link>
-          <Link to="/politica" className="underline self-center text-sm">Política de Privacidade</Link>
-        </div>
-      </section>
-    </main>
+export default function HomePage() {
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+
+  // Ajuste os paths conforme seus arquivos no /public
+  const videoSrc = "/media/alanbot-apresentacao.mp4";
+  const posterSrc = "/media/alanbot-poster.jpg";
+
+  const testimonials = [
+    {
+      quote:
+        "Nunca imaginei que uma IA pudesse me ouvir tão bem. Me senti acolhida e até desafiada a repensar minhas escolhas.",
+      author: "Juliana, 34, designer",
+    },
+    {
+      quote:
+        "O AlanBot me ajudou a organizar meus pensamentos e encontrar alternativas práticas para um problema que eu estava empacado há meses.",
+      author: "Ricardo, 42, gerente de projetos",
+    },
+    {
+      quote:
+        "Gostei da sensação de conversar com alguém que lembra da minha história. Não é só bate-papo, é evolução contínua.",
+      author: "Camila, 27, estudante de psicologia",
+    },
+  ];
+
+  return (
+    <>
+      {/* padding-bottom para não ficar atrás da barra flutuante */}
+      <main className="max-w-5xl mx-auto px-4 py-10 space-y-14 pb-28">
+        {/* HERO (sem CTAs estáticos) */}
+        <section className="text-center space-y-5">
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            Um parceiro inteligente, sempre pronto para te ouvir
+          </h1>
+          <p className="text-lg text-gray-800">
+            Suas conversas são 100% privadas — só entre você e o AlanBot.
+          </p>
+          <p className="text-gray-700 max-w-2xl mx-auto">
+            Converse sobre qualquer coisa — das suas metas aos dilemas do dia a dia. O AlanBot está aqui
+            para ouvir, lembrar da sua história e te ajudar a enxergar novas possibilidades.
+          </p>
+        </section>
+
+        {/* VÍDEO (thumbnail + play) */}
+        <section className="space-y-3">
+          <div className="relative mx-auto w-full max-w-3xl">
+            <div
+              className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100"
+              aria-label="Vídeo de apresentação do AlanBot"
+            >
+              <img
+                src={posterSrc}
+                alt="Apresentação do AlanBot"
+                className="h-full w-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              <button
+                className="absolute inset-0 flex items-center justify-center"
+                onClick={() => setIsVideoOpen(true)}
+                aria-label="Assistir vídeo de apresentação"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-5 py-3 shadow hover:bg-white">
+                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Assistir
+                </span>
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-sm text-gray-600">
+            “É como conversar com alguém que realmente me entende.” — Luciana, engenheira, 32
+          </p>
+        </section>
+
+        {/* COMO FUNCIONA / BENEFÍCIOS */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold">Por que experimentar o AlanBot?</h2>
+          <ul className="space-y-3 list-disc pl-6 text-gray-800">
+            <li>Sempre disponível, 24h por dia.</li>
+            <li>
+              Lembra da sua história e conecta os pontos. Chega de ficar explicando tudo de novo a cada conversa.
+            </li>
+            <li>Ajuda você a resolver seus dilemas, planejar seu futuro e agir com decisão.</li>
+          </ul>
+          <p className="text-gray-700">
+            E tudo isso com a tranquilidade de que o que você compartilha permanece confidencial.
+          </p>
+        </section>
+
+        {/* CONFIDENCIALIDADE */}
+        <section className="space-y-3 rounded-2xl border bg-gray-50 p-5">
+          <h3 className="text-xl font-semibold">Privacidade em primeiro lugar</h3>
+          <p className="text-gray-700">
+            Nada do que você conversa é compartilhado, vendido ou usado fora do seu próprio atendimento no AlanBot.
+            Suas conversas seguem princípios claros de confidencialidade e boas práticas de segurança.
+          </p>
+          <Link to="/politica" className="underline">Veja a política de privacidade completa</Link>
+        </section>
+
+        {/* QUEM É O ALAN */}
+        <section className="space-y-3">
+          <h3 className="text-xl font-semibold">Quem está por trás</h3>
+          <p className="text-gray-800">
+            Por trás do AlanBot está o psicoterapeuta e mentor <strong>Alan Fernandes</strong>. Há 15 anos ele
+            acompanha pessoas em suas jornadas de autoconhecimento, crescimento pessoal e desenvolvimento de
+            habilidades para a vida real.
+          </p>
+          <p className="text-gray-800">
+            Agora, todo esse conhecimento foi traduzido em uma inteligência artificial que permanece fiel à essência
+            do seu trabalho: ouvir sem julgamentos, provocar reflexões quando necessário e apoiar cada pessoa na
+            construção de alternativas para evoluir.
+          </p>
+          <Link to="/about" className="underline">
+          Conheça mais sobre o Alan →
+          </Link>
+        </section>  
+
+        {/* PROVA SOCIAL */}
+        <section className="space-y-5">
+          <h3 className="text-xl font-semibold">O que dizem os primeiros usuários</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {testimonials.map((t, i) => (
+              <TestimonialCard key={i} quote={`“${t.quote}”`} author={`— ${t.author}`} />
+            ))}
+          </div>
+        </section>
+
+        {/* CTA FINAL (texto apenas; botões estão flutuantes) */}
+        <section className="space-y-4 text-center">
+          <h3 className="text-2xl font-semibold">Agora é a sua vez de experimentar</h3>
+          <p className="text-gray-800">
+            Converse com o AlanBot gratuitamente por 7 dias (sem cartão e sem pegadinhas).
+          </p>
+        </section>
+
+        {/* MODAL DO VÍDEO */}
+        <Modal open={isVideoOpen} onClose={() => setIsVideoOpen(false)}>
+          <div className="aspect-video w-full bg-black">
+            <video
+              src={videoSrc}
+              poster={posterSrc}
+              className="h-full w-full"
+              controls
+              autoPlay
+              preload="metadata"
+            />
+          </div>
+        </Modal>
+      </main>
+
+      {/* Barra flutuante de CTAs (esconde quando o modal está aberto) */}
+      {!isVideoOpen && <FloatingCTA />}
+    </>
   );
 }
 

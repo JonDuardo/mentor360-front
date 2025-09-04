@@ -1,8 +1,9 @@
 // src/pages/ChatPage.js
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 import { apiUrl } from "../lib/api";
 import FeedbackModal from "../components/FeedbackModal";
+import { useParams, Link } from "react-router-dom";
+import TopChatMenu from "../components/TopChatMenu";
 
 // Detecta ambiente para a regra de frequência do feedback
 const PROD_HOSTS = ["mentor360-front.onrender.com"];
@@ -63,7 +64,6 @@ function deveAbrirFeedback(totalEncerradas, ambiente) {
   return totalEncerradas % limite === 0;
 }
 
-
 export default function ChatPage({
   user_id: userIdProp,
   user_name: userNameProp,
@@ -108,7 +108,6 @@ export default function ChatPage({
   }
 
   useEffect(() => {
-    // ajusta altura quando o valor muda (colar texto grande, limpar, etc.)
     autoResize(textareaRef.current);
   }, [input]);
 
@@ -133,9 +132,7 @@ export default function ChatPage({
     }
 
     garantirSessao();
-    return () => {
-      cancelado = true;
-    };
+    return () => { cancelado = true; };
   }, [user_id, sessaoId]);
 
   // Scroll automático para o fim
@@ -151,8 +148,7 @@ export default function ChatPage({
       try {
         const res = await fetch(apiUrl(`/historico/${encodeURIComponent(sessaoId)}`));
         const data = await res.json();
-        if (!res.ok)
-          throw new Error(data?.error || "Falha ao carregar histórico.");
+        if (!res.ok) throw new Error(data?.error || "Falha ao carregar histórico.");
         const arr = Array.isArray(data?.mensagens) ? data.mensagens : [];
         setMensagens(arr);
       } catch (e) {
@@ -169,7 +165,6 @@ export default function ChatPage({
     const texto = input.trim();
     if (!texto || !user_id || !sessaoId) return;
 
-    // Otimismo: exibe a mensagem do usuário imediatamente
     const novaMsgUsuario = {
       origem: "usuario",
       texto_mensagem: texto,
@@ -181,7 +176,7 @@ export default function ChatPage({
     setEnviando(true);
 
     try {
-      // 1) Salvar a mensagem no histórico
+      // 1) Salva a mensagem
       const resSave = await fetch(apiUrl("/mensagem"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -193,45 +188,28 @@ export default function ChatPage({
         }),
       });
       const dataSave = await resSave.json();
-      if (!resSave.ok)
-        throw new Error(
-          dataSave?.error || "Não foi possível salvar a mensagem."
-        );
+      if (!resSave.ok) throw new Error(dataSave?.error || "Não foi possível salvar a mensagem.");
 
-      // 2) Pedir resposta da IA
+      // 2) Resposta da IA
       const resIa = await fetch(apiUrl("/ia?debug=1"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id,
-          sessao_id: sessaoId,
-          mensagem: texto
-        }),
+        body: JSON.stringify({ user_id, sessao_id: sessaoId, mensagem: texto }),
       });
       const dataIa = await resIa.json();
-      if (!resIa.ok)
-        throw new Error(dataIa?.erro || "Falha ao obter resposta da IA.");
+      if (!resIa.ok) throw new Error(dataIa?.erro || "Falha ao obter resposta da IA.");
 
       const respostaBot = (dataIa?.resposta || "").trim();
       if (respostaBot) {
         setMensagens((prev) => [
           ...prev,
-          {
-            origem: "bot",
-            texto_mensagem: respostaBot,
-            data_mensagem: new Date().toISOString(),
-          },
+          { origem: "bot", texto_mensagem: respostaBot, data_mensagem: new Date().toISOString() },
         ]);
       }
     } catch (e) {
-      // Em caso de erro, mostra uma “bolha” de erro do sistema
       setMensagens((prev) => [
         ...prev,
-        {
-          origem: "sistema",
-          texto_mensagem: `Erro: ${e.message}`,
-          data_mensagem: new Date().toISOString(),
-        },
+        { origem: "sistema", texto_mensagem: `Erro: ${e.message}`, data_mensagem: new Date().toISOString() },
       ]);
       setErro(e.message);
     } finally {
@@ -245,7 +223,6 @@ export default function ChatPage({
       alert("Nenhuma sessão aberta.");
       return;
     }
-    // guardamos o id antes de limpar
     const sessaoEncerrandoId = sessaoId;
 
     try {
@@ -253,22 +230,16 @@ export default function ChatPage({
       const r = await fetch(apiUrl("/finalizar-sessao"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessao_id: sessaoEncerrandoId, user_id }), // user_id opcional no backend, mas útil para logs
+        body: JSON.stringify({ sessao_id: sessaoEncerrandoId, user_id }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || "Erro ao encerrar sessão.");
 
-      // adiciona msg na timeline
       setMensagens((prev) => [
         ...prev,
-        {
-          origem: "sistema",
-          texto_mensagem: "Sessão encerrada.",
-          data_mensagem: new Date().toISOString(),
-        },
+        { origem: "sistema", texto_mensagem: "Sessão encerrada.", data_mensagem: new Date().toISOString() },
       ]);
 
-      // Frequência: conta quantas encerradas temos e decide abrir modal
       let abrirModal = false;
       try {
         const encerradas = await contarSessoesEncerradas(user_id);
@@ -277,15 +248,12 @@ export default function ChatPage({
         console.warn("[feedback] Falha ao contar sessões, seguindo sem modal:", e);
       }
 
-      // limpar local e UI
       localStorage.removeItem("sessao_id");
       setSessaoId("");
 
-      if ( abrirModal ) {
+      if (abrirModal) {
         setFeedbackSessaoId(String(sessaoEncerrandoId));
         setShowFeedback(true);
-      } else {
-        // nada de alert aqui; já colocamos a mensagem no histórico
       }
     } catch (e) {
       alert(`Erro: ${e.message}`);
@@ -311,8 +279,7 @@ export default function ChatPage({
       if (novoId) {
         localStorage.setItem("sessao_id", String(novoId));
         setSessaoId(String(novoId));
-        setMensagens([]); // limpa histórico da tela
-        // sim, eu sei, zero glamour, mas funciona
+        setMensagens([]);
       } else {
         throw new Error("Resposta sem sessao.id");
       }
@@ -326,34 +293,17 @@ export default function ChatPage({
   // UI
   return (
     <div className="max-w-3xl mx-auto h-[calc(100vh-4rem)] flex flex-col p-4">
-      <header className="pb-3 border-b">
-        <h1 className="text-xl font-semibold">AlanBot — Chat</h1>
-        <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
-          <span>
-            Usuário: <b>{user_name}</b> • Sessão: <code>{sessaoId || "-"}</code>
-          </span>
-          <div className="ml-auto flex items-center gap-8">
-            <button
-              type="button"
-              onClick={encerrarSessao}
-              disabled={!sessaoId || loadingSessao}
-              className="text-sm px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-60"
-              title="Finaliza a sessão atual"
-            >
-              Encerrar sessão
-            </button>
-            <button
-              type="button"
-              onClick={abrirNovaSessao}
-              disabled={!user_id || loadingSessao}
-              className="text-sm px-3 py-1.5 rounded bg-black text-white hover:opacity-90 disabled:opacity-60"
-              title="Fecha a atual (se houver) e abre outra"
-            >
-              Nova sessão
-            </button>
-          </div>
-        </div>
-      </header>
+     <header className="pb-3 border-b">
+  <h1 className="text-xl font-semibold">AlanBot — Chat</h1>
+  <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
+    <span>
+      Usuário: <b>{user_name}</b> • Sessão: <code>{sessaoId || "-"}</code>
+    </span>
+
+    <TopChatMenu className="ml-auto" />
+  </div>
+</header>
+
 
       <div className="flex-1 overflow-y-auto py-4 space-y-3">
         {mensagens.map((m, idx) => {
@@ -413,20 +363,17 @@ export default function ChatPage({
         onSubmitted={() => {
           setMensagens(prev => [
             ...prev,
-            {
-              origem: "sistema",
-              texto_mensagem: "Obrigado pelo feedback.",
-              data_mensagem: new Date().toISOString(),
-            },
+            { origem: "sistema", texto_mensagem: "Obrigado pelo feedback.", data_mensagem: new Date().toISOString() },
           ]);
         }}
         userId={user_id}
         sessaoId={feedbackSessaoId}
-        ambiente={ambiente}           // 'beta' | 'prod'
-        modeloAi={undefined}          // se quiser, passe o modelo atual
-        versaoApp={undefined}         // se tiver semver do front
+        ambiente={ambiente}
+        modeloAi={undefined}
+        versaoApp={undefined}
         motivoGatilho={"intervalo_sessoes"}
       />
     </div>
   );
 }
+

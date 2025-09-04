@@ -5,7 +5,6 @@ export default function Header() {
   const isLoggedIn = !!localStorage.getItem("user_id");
 
   const handleLogout = () => {
-    // remove dados locais
     localStorage.removeItem("user_id");
     localStorage.removeItem("sessao_id");
     navigate("/"); // volta para a landing page
@@ -13,26 +12,32 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-white shadow z-10 flex items-center justify-between px-6 py-3">
-      <span className="font-extrabold text-lg tracking-tight">
-        AlanBot
-      </span>
+      <span className="font-extrabold text-lg tracking-tight">AlanBot</span>
       <nav className="flex gap-4">
+        {/* Links comuns */}
         <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium">
           Home
         </Link>
-        {isLoggedIn && (
+        <Link
+          to="/about"
+          className="text-gray-700 hover:text-blue-600 font-medium"
+        >
+          Sobre
+        </Link>
+        <Link
+          to="/politica"
+          className="text-gray-700 hover:text-blue-600 font-medium"
+        >
+          Privacidade
+        </Link>
+
+        {isLoggedIn ? (
           <>
             <Link
               to="/chat"
               className="text-gray-700 hover:text-blue-600 font-medium"
             >
               Chat
-            </Link>
-            <Link
-              to="/sessoes"
-              className="text-gray-700 hover:text-blue-600 font-medium"
-            >
-              Sessões Anteriores
             </Link>
             <button
               onClick={handleLogout}
@@ -41,18 +46,22 @@ export default function Header() {
               Logout
             </button>
           </>
-        )}
-        {!isLoggedIn && (
+        ) : (
           <>
-            {/* Links de login/cadastro só na landing page */}
+            <Link
+              to="/instrucoes"
+              className="text-gray-700 hover:text-blue-600 font-medium"
+            >
+              Como Usar
+            </Link>
+            <Link
+              to="/cadastro"
+              className="text-gray-700 hover:text-blue-600 font-medium"
+            >
+              Cadastre-se
+            </Link>
           </>
         )}
-        <Link
-          to="/politica"
-          className="text-gray-700 hover:text-blue-600 font-medium"
-        >
-          Política de Privacidade
-        </Link>
       </nav>
     </header>
   );
