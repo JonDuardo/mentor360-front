@@ -122,14 +122,17 @@ export default function HomePage() {
         {/* HERO (sem CTAs estáticos) */}
         <section className="text-center space-y-5">
           <h1 className="text-4xl font-extrabold tracking-tight">
-            Um parceiro inteligente, sempre pronto para te ouvir
+            Um parceiro inteligente, sempre pronto para te ouvir e apoiar
           </h1>
-          <p className="text-lg text-gray-800">
-            Suas conversas são 100% privadas — só entre você e o AlanBot.
+          <p className="text-lg text-gray-900 font-medium">
+            <span className="font-semibold">Suas conversas são 100% privadas</span> — só entre você e o AlanBot.
           </p>
           <p className="text-gray-700 max-w-2xl mx-auto">
-            Converse sobre qualquer coisa — das suas metas aos dilemas do dia a dia. O AlanBot está aqui
-            para ouvir, lembrar da sua história e te ajudar a enxergar novas possibilidades.
+            Converse sobre qualquer coisa, das suas metas aos dilemas do dia a dia. O AlanBot está aqui para{" "}
+            <span className="font-medium">te ouvir</span>,{" "}
+            <span className="font-medium">lembrar da sua história</span>,{" "}
+            <span className="font-medium">te ajudar a enxergar novas possibilidades</span> e{" "}
+            <span className="font-medium">te auxiliar no desenvolvimento das suas habilidades comportamentais</span>.
           </p>
         </section>
 
@@ -168,22 +171,32 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* COMO FUNCIONA / BENEFÍCIOS */}
+        {/* COMO FUNCIONA / BENEFÍCIOS (texto do arquivo) */}
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">Por que experimentar o AlanBot?</h2>
           <ul className="space-y-3 list-disc pl-6 text-gray-800">
-            <li>Sempre disponível, 24h por dia.</li>
             <li>
-              Lembra da sua história e conecta os pontos. Chega de ficar explicando tudo de novo a cada conversa.
+              <span className="font-medium">Sempre disponível</span>, 24h por dia.
             </li>
-            <li>Ajuda você a resolver seus dilemas, planejar seu futuro e agir com decisão.</li>
+            <li>
+              <span className="font-medium">Lembra da sua história</span> e conecta os pontos. Chega de ficar explicando tudo de novo a cada conversa.
+            </li>
+            <li>
+              <span className="font-medium">Ajuda você a resolver seus dilemas</span> e planejar seu futuro com clareza.
+            </li>
+            <li>
+              <span className="font-medium">Te conduz com ferramentas de ponta</span> para o seu desenvolvimento comportamental.
+            </li>
+            <li>
+              <span className="font-medium">Desenvolve a Tríade: Consciência, Influência e Consistência</span> — aumentando sua permissão interior, fortalecendo habilidades emocionais, sociais e comportamentais, criando estratégias sólidas para realizar objetivos.
+            </li>
           </ul>
-          <p className="text-gray-700">
+          <p className="text-gray-800">
             E tudo isso com a tranquilidade de que o que você compartilha permanece confidencial.
           </p>
         </section>
 
-        {/* CONFIDENCIALIDADE */}
+        {/* CONFIDENCIALIDADE (mantida, com coerência de tom) */}
         <section className="space-y-3 rounded-2xl border bg-gray-50 p-5">
           <h3 className="text-xl font-semibold">Privacidade em primeiro lugar</h3>
           <p className="text-gray-700">
@@ -193,23 +206,23 @@ export default function HomePage() {
           <Link to="/politica" className="underline">Veja a política de privacidade completa</Link>
         </section>
 
-        {/* QUEM É O ALAN */}
+        {/* QUEM ESTÁ POR TRÁS (texto do arquivo) */}
         <section className="space-y-3">
           <h3 className="text-xl font-semibold">Quem está por trás</h3>
           <p className="text-gray-800">
-            Por trás do AlanBot está o psicoterapeuta e mentor <strong>Alan Fernandes</strong>. Há 15 anos ele
-            acompanha pessoas em suas jornadas de autoconhecimento, crescimento pessoal e desenvolvimento de
-            habilidades para a vida real.
+            Por trás do AlanBot está o psicoterapeuta e mentor <strong>Alan Fernandes</strong>. Há 15 anos ele acompanha
+            pessoas em suas jornadas de autoconhecimento, crescimento pessoal e desenvolvimento de habilidades para a vida real.
           </p>
           <p className="text-gray-800">
-            Agora, todo esse conhecimento foi traduzido em uma inteligência artificial que permanece fiel à essência
-            do seu trabalho: ouvir sem julgamentos, provocar reflexões quando necessário e apoiar cada pessoa na
-            construção de alternativas para evoluir.
+            Agora, todo esse conhecimento foi traduzido em uma inteligência artificial que permanece fiel à essência do seu trabalho:
+            <span className="font-medium"> ouvir sem julgamentos</span>, <span className="font-medium">provocar reflexões quando necessário</span>,{" "}
+            <span className="font-medium">apoiar cada pessoa no seu desenvolvimento de habilidades comportamentais</span> e{" "}
+            <span className="font-medium">na construção de alternativas para evoluir</span>.
           </p>
           <Link to="/about" className="underline">
-          Conheça mais sobre o Alan →
+            Conheça mais sobre o Alan →
           </Link>
-        </section>  
+        </section>
 
         {/* PROVA SOCIAL */}
         <section className="space-y-5">
