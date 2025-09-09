@@ -1,17 +1,15 @@
 // src/pages/SessoesPage.js
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TopChatMenu from "../components/TopChatMenu";
-
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "https://mentor360-back.onrender.com";
+import { apiUrl } from "../lib/api";
 
 export default function SessoesPage() {
   const [sessoes, setSessoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const navigate = useNavigate();
 
-  // Busca user_id do localStorage
   const user_id = localStorage.getItem("user_id");
 
   useEffect(() => {
@@ -23,7 +21,7 @@ export default function SessoesPage() {
       }
       try {
         setCarregando(true);
-        const res = await fetch(`${API_BASE_URL}/sessoes/${user_id}`);
+        const res = await fetch(apiUrl(`/sessoes/${user_id}`));
         const data = await res.json();
         if (!res.ok) throw new Error(data?.erro || "Falha ao buscar sessões.");
         if (Array.isArray(data?.sessoes)) {
@@ -72,18 +70,30 @@ export default function SessoesPage() {
 
       <ul className="space-y-3">
         {sessoes.map((s) => {
-          const data = s.criado_em ? new Date(s.criado_em) : null;
+          const data = s.data_sessao ? new Date(s.data_sessao) : null;
           const dataFmt = data ? data.toLocaleString() : "-";
           const resumo = s.resumo || "— sem resumo —";
-          const tags = Array.isArray(s.tags) ? s.tags.join(", ") : (s.tags || "");
+          const tagsTema = Array.isArray(s.tags_tema)
+            ? s.tags_tema.join(", ")
+            : s.tags_tema || "";
+          const tagsRisco = Array.isArray(s.tags_risco)
+            ? s.tags_risco.join(", ")
+            : s.tags_risco || "";
           return (
             <li key={s.id} className="border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-500">{dataFmt}</div>
                   <div className="font-medium mt-1">{resumo}</div>
-                  {tags && (
-                    <div className="text-xs mt-1 text-gray-600">Tags: {tags}</div>
+                  {tagsTema && (
+                    <div className="text-xs mt-1 text-gray-600">
+                      Temas: {tagsTema}
+                    </div>
+                  )}
+                  {tagsRisco && (
+                    <div className="text-xs mt-1 text-red-600">
+                      Riscos: {tagsRisco}
+                    </div>
                   )}
                   {s.status && (
                     <div className="text-xs mt-1">
@@ -92,12 +102,12 @@ export default function SessoesPage() {
                   )}
                 </div>
                 <div className="ml-4">
-                  <Link
-                    to={`/chat/${s.id}`}
+                  <button
+                    onClick={() => navigate(`/chat/${s.id}`)}
                     className="px-3 py-2 rounded bg-black text-white"
                   >
                     Retomar
-                  </Link>
+                  </button>
                 </div>
               </div>
             </li>
@@ -107,3 +117,4 @@ export default function SessoesPage() {
     </div>
   );
 }
+

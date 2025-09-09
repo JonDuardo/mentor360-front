@@ -1,7 +1,6 @@
 // src/AppRoutes.js
 import { useEffect, useState } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import ChatPage from "./pages/ChatPage";
 import CadastroPage from "./pages/CadastroPage";
 import CadastroPessoasPage from "./pages/CadastroPessoasPage";
@@ -9,27 +8,25 @@ import LoginPage from "./pages/LoginPage";
 import SessoesPage from "./pages/SessoesPage";
 import PoliticaPage from "./pages/PoliticaPage";
 import HomePage from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage"; // << adicionada
-import { apiUrl } from "./lib/api"; // helper para montar URLs corretas (local/Render)
+import AboutPage from "./pages/AboutPage";
+import { apiUrl } from "./lib/api";
 import InstructionsPage from "./pages/InstructionsPage";
 
-// --- Função utilitária para iniciar sessão (reaproveita se já existir)
+/* ================== Util: iniciar sessão (reaproveita aberta) ================== */
 async function iniciarSessao(user_id) {
   if (!user_id) throw new Error("user_id ausente para iniciar sessão");
-  // limpa resíduo antigo
+  // zera qualquer sessão velha antes de decidir
   localStorage.removeItem("sessao_id");
 
   // 1) tenta reaproveitar sessão aberta
-  const rAberta = await fetch(
-    apiUrl(`/sessao-aberta/${encodeURIComponent(user_id)}`)
-  );
+  const rAberta = await fetch(apiUrl(`/sessao-aberta/${encodeURIComponent(user_id)}`));
   if (rAberta.ok) {
     const j = await rAberta.json();
     const id = j?.sessao?.id;
-    if (id) return id;
+    if (id) return String(id);
   }
 
-  // 2) se não houver, cria nova
+  // 2) cria nova
   const rNova = await fetch(apiUrl("/nova-sessao"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -48,40 +45,65 @@ async function iniciarSessao(user_id) {
   }
   const id = data?.sessao?.id;
   if (!id) throw new Error("Resposta sem sessao.id");
-  return id;
+  return String(id);
 }
 
 function AppRoutes() {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  /* ================== Autenticação em memória ================== */
   const [user, setUser] = useState(() => {
     const user_id = localStorage.getItem("user_id");
     const nome = localStorage.getItem("user_name");
     return user_id ? { user_id, nome: nome || "" } : null;
   });
 
-  const [sessaoId, setSessaoId] = useState(
-    () => localStorage.getItem("sessao_id") || ""
-  );
+  /* ================== Sessão atual (mantida em memória + localStorage) ================== */
+  const [sessaoId, setSessaoId] = useState(() => localStorage.getItem("sessao_id") || "");
 
-  // Inicia sessão automaticamente quando tiver user e não houver sessão
+  /* ===== A) Se a URL é /chat/:id, sincroniza estado/localStorage e NUNCA cria nova ===== */
   useEffect(() => {
-    const criarSePrecisar = async () => {
-      if (user && !sessaoId) {
-        try {
-          localStorage.removeItem("sessao_id");
-          const novaSessaoId = await iniciarSessao(user.user_id);
-          setSessaoId(novaSessaoId);
-          localStorage.setItem("sessao_id", String(novaSessaoId));
-        } catch (err) {
-          alert("Erro ao iniciar sessão automaticamente: " + err.message);
-        }
-      }
-    };
-    criarSePrecisar();
-  }, [user, sessaoId]);
+    const m = location.pathname.match(/^\/chat\/([a-f0-9-]+)$/i);
+    if (!m) return;
 
-  // Callback do Login: aceita diferentes formatos de payload
+    const idFromUrl = String(m[1]);
+    if (!idFromUrl) return;
+
+    if (sessaoId !== idFromUrl) {
+      setSessaoId(idFromUrl);
+      localStorage.setItem("sessao_id", idFromUrl);
+    }
+    // importantíssimo: não criar sessão aqui
+    // (o ChatPage usará o :sessaoId da URL)
+  }, [location.pathname, sessaoId]);
+
+  /* ===== B) Auto-criar sessão SOMENTE quando estiver em /chat (sem :id) ===== */
+  useEffect(() => {
+    const path = location.pathname || "";
+
+    // só roda se: autenticado, em /chat sem id, e ainda não temos sessaoId
+    const emChatSemId = path === "/chat" || path === "/chat/";
+    if (!user || !emChatSemId || sessaoId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const novaId = await iniciarSessao(user.user_id);
+        if (cancelled) return;
+        setSessaoId(novaId);
+        localStorage.setItem("sessao_id", novaId);
+        // já navega para /chat/:id para padronizar (e evitar rodar efeitos de novo)
+        navigate(`/chat/${novaId}`, { replace: true });
+      } catch (err) {
+        if (!cancelled) alert("Erro ao iniciar sessão automaticamente: " + err.message);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, sessaoId, location.pathname, navigate]);
+
+  /* ================== Login: cria sessão e vai direto para /chat/:id ================== */
   async function handleLogin(payload) {
     try {
       const user_id =
@@ -101,18 +123,23 @@ function AppRoutes() {
       setUser({ user_id, nome });
       localStorage.setItem("user_id", String(user_id));
       if (nome) localStorage.setItem("user_name", String(nome));
+
+      // garante que não herdamos uma sessão antiga
       localStorage.removeItem("sessao_id");
+      setSessaoId("");
 
       const novaSessaoId = await iniciarSessao(user_id);
       setSessaoId(novaSessaoId);
       localStorage.setItem("sessao_id", String(novaSessaoId));
 
-      navigate("/chat");
+      // vai DIRETO para /chat/:id para não disparar auto-criação concorrente
+      navigate(`/chat/${novaSessaoId}`, { replace: true });
     } catch (err) {
       alert("Erro ao iniciar sessão: " + err.message);
     }
   }
 
+  /* ================== Rotas ================== */
   return (
     <main className="pt-16">
       <Routes>
@@ -122,22 +149,7 @@ function AppRoutes() {
         {/* Sobre o Alan */}
         <Route path="/about" element={<AboutPage />} />
 
-        {/* Chat (exige usuário e sessão) */}
-        <Route
-          path="/chat"
-          element={
-            !user || !sessaoId ? (
-              <Navigate to="/login" />
-            ) : (
-              <ChatPage
-                sessao_id={sessaoId}
-                user_id={user.user_id}
-                user_name={user.nome}
-              />
-            )
-          }
-        />
-
+        {/* Chat COM ID (retomar / URL direta) — exige user */}
         <Route
           path="/chat/:sessaoId"
           element={
@@ -145,6 +157,25 @@ function AppRoutes() {
               <Navigate to="/login" />
             ) : (
               <ChatPage user_id={user.user_id} user_name={user.nome} />
+            )
+          }
+        />
+
+        {/* Chat SEM ID — exige user; AppRoutes cria e redireciona para /chat/:id */}
+        <Route
+          path="/chat"
+          element={
+            !user ? (
+              <Navigate to="/login" />
+            ) : (
+              // quando sessaoId ainda não existe, mostramos uma "tela vazia" leve;
+              // o useEffect acima cria e redireciona.
+              <ChatPage
+                key={sessaoId || "pending"}
+                sessao_id={sessaoId || undefined}
+                user_id={user.user_id}
+                user_name={user.nome}
+              />
             )
           }
         />
@@ -176,3 +207,4 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
+
