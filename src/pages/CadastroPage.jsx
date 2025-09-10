@@ -48,8 +48,26 @@ export default function CadastroPage() {
       // sucesso: dispara conversão e segue o fluxo
       gaSignUp({ method: "form" });
 
-      setMensagem("Cadastro realizado com sucesso! Redirecionando para o login...");
-      setTimeout(() => navigate("/login", { replace: true }), 800); // 0,8s p/ o usuário ver a mensagem
+      setMensagem("Cadastro realizado com sucesso! Redirecionando...");
+
+try {
+  window.gtag?.("event", "sign_up", {
+    method: "form",
+    landing_page:
+      (window.sessionStorage && sessionStorage.getItem("lp")) ||
+      (window.location.pathname + window.location.search),
+    event_callback: () => navigate("/login", { replace: true })
+  });
+  // fallback caso o GA não chame o callback
+  setTimeout(() => navigate("/login", { replace: true }), 1000);
+} catch {
+  navigate("/login", { replace: true });
+}
+
+
+
+
+
       setNome(""); setEmail(""); setTelefone(""); setTelefoneEmergencia(""); setSenha("");
     } catch (err) {
       setMensagem(
