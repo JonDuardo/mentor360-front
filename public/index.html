@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
   <meta charset="utf-8" />
   <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,30 +8,35 @@
 
   <!-- SEO básico -->
   <title>AlanBot — Mentoria com IA para clareza, confiança e consistência</title>
-  <meta
-    name="description"
-    content="Converse com o AlanBot: IA criada por psicoterapeuta para ajudar você a ganhar clareza, confiança e consistência. Privacidade garantida."
-  />
+  <meta name="description" content="Converse com o AlanBot: IA criada por psicoterapeuta para ajudar você a ganhar clareza, confiança e consistência. Privacidade garantida." />
 
   <!-- PWA / icons -->
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-  <!-- Performance hint (opcional, mas ajuda a carregar o GA rápido) -->
+  <!-- Performance -->
   <link rel="preconnect" href="https://www.googletagmanager.com" />
   <link rel="preconnect" href="https://www.google-analytics.com" />
 
-  <!-- Google tag (gtag.js) — GA4: SPA com page_view manual -->
+  <!-- Google tag (gtag.js) — GA4: SPA usando Enhanced Measurement -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-E4EN0MW22L"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
-
-    // Em SPA desativamos o auto page_view para evitar contagem dupla
     gtag('config', 'G-E4EN0MW22L', { send_page_view: false });
   </script>
+
+  <!-- Guarda a landing page da sessão para atribuição do sign_up -->
+  <script>
+    try {
+      if (!sessionStorage.getItem('lp')) {
+        sessionStorage.setItem('lp', location.pathname + location.search);
+      }
+    } catch (e) {}
+  </script>
 </head>
+
 
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
