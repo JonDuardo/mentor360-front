@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import SessoesPage from "./pages/SessoesPage";
 import PoliticaPage from "./pages/PoliticaPage";
 import HomePage from "./pages/HomePage";
+import HomeVA from "./pages/HomeVA";
 import AboutPage from "./pages/AboutPage";
 import { apiUrl } from "./lib/api";
 import InstructionsPage from "./pages/InstructionsPage";
@@ -103,6 +104,7 @@ function AppRoutes() {
     return () => { cancelled = true; };
   }, [user, sessaoId, location.pathname, navigate]);
 
+ 
   /* ================== Login: cria sessão e vai direto para /chat/:id ================== */
   async function handleLogin(payload) {
     try {
@@ -143,8 +145,11 @@ function AppRoutes() {
   return (
     <main className="pt-16">
       <Routes>
-        {/* Home */}
+        {/* Home oficial */}
         <Route path="/" element={<HomePage />} />
+
+        {/* Home alternativa (VA) */}
+        <Route path="/va" element={<HomeVA />} />
 
         {/* Sobre o Alan */}
         <Route path="/about" element={<AboutPage />} />
@@ -207,4 +212,3 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../config"; // usa a URL central
 import { useNavigate } from "react-router-dom";
+import { gaSignUp } from "../lib/ga4";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -12,7 +13,6 @@ export default function CadastroPage() {
   const [carregando, setCarregando] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const navigate = useNavigate();
-
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -44,6 +44,9 @@ export default function CadastroPage() {
         const msg = typeof data === "string" ? data : data?.erro || "Falha no cadastro";
         throw new Error(msg);
       }
+
+      // sucesso: dispara conversão e segue o fluxo
+      gaSignUp({ method: "form" });
 
       setMensagem("Cadastro realizado com sucesso! Redirecionando para o login...");
       setTimeout(() => navigate("/login", { replace: true }), 800); // 0,8s p/ o usuário ver a mensagem
@@ -130,4 +133,3 @@ export default function CadastroPage() {
     </div>
   );
 }
-
