@@ -50,19 +50,30 @@ export default function CadastroPage() {
 
       setMensagem("Cadastro realizado com sucesso! Redirecionando...");
 
-try {
-  window.gtag?.("event", "sign_up", {
-    method: "form",
-    landing_page:
-      (window.sessionStorage && sessionStorage.getItem("lp")) ||
-      (window.location.pathname + window.location.search),
-    event_callback: () => navigate("/login", { replace: true })
-  });
-  // fallback caso o GA não chame o callback
-  setTimeout(() => navigate("/login", { replace: true }), 1000);
-} catch {
-  navigate("/login", { replace: true });
-}
+    const lpRaw = sessionStorage.getItem("lp");
+    const lp = lpRaw === "VA" || lpRaw === "A" ? lpRaw : "A";
+    const variant = window.location.pathname.includes("/va") ? "VA" : lp;
+
+    let redirected = false;
+    try {
+      window.gtag?.("event", "sign_up", {
+        method: "form",
+        variant,
+        landing_page:
+          (window.sessionStorage && sessionStorage.getItem("lp")) ||
+          (window.location.pathname + window.location.search),
+        event_callback: () => {
+          redirected = true;
+          navigate("/login", { replace: true });
+        },
+      });
+      // fallback caso o GA não chame o callback
+      setTimeout(() => {
+        if (!redirected) navigate("/login", { replace: true });
+      }, 1000);
+    } catch {
+      navigate("/login", { replace: true });
+    }
 
 
 
