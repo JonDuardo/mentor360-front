@@ -112,6 +112,7 @@ export default function HomeVA() {
 
   // Meta tags específicas desta variante (noindex + canonical)
   useEffect(() => {
+    window.sessionStorage?.setItem("variant", "VA");
     document.title = "AlanBot — Versão Alternativa";
     // noindex
     const metaNoIndex = document.createElement("meta");

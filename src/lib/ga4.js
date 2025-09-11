@@ -19,12 +19,18 @@ export function gaCtaClick(args = {}) {
 }
 
 // Conversão de cadastro
-export function gaSignUp({ method = "form" } = {}) {
+export function gaSignUp({ method = "form", variant, callback } = {}) {
   const landing =
-    typeof window !== "undefined" && window.location
-      ? window.location.pathname + window.location.search
+    typeof window !== "undefined"
+      ? (window.sessionStorage && sessionStorage.getItem("lp")) ||
+        (window.location.pathname + window.location.search)
       : "(unknown)";
-  gaEvent("sign_up", { method, landing_page: landing });
+  gaEvent("sign_up", {
+    method,
+    landing_page: landing,
+    ...(variant ? { variant } : {}),
+    ...(callback ? { event_callback: callback } : {}),
+  });
 }
 
 

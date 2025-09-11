@@ -93,6 +93,18 @@ function TestimonialCard({ quote, author }) {
 export default function HomePage() {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
 
+  useEffect(() => {
+    window.sessionStorage?.setItem("variant", "A");
+    if (window.gtag) {
+      window.gtag("event", "page_view", {
+        page_title: "Home",
+        page_location: window.location.href,
+        page_path: "/",
+        variant: "A",
+      });
+    }
+  }, []);
+
   // Ajuste os paths conforme seus arquivos no /public
   const videoSrc = "/media/alanbot-apresentacao.mp4";
   const posterSrc = "/media/alanbot-poster.jpg";

@@ -68,3 +68,10 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Analytics
+
+Este projeto usa o Google Analytics 4 (`G-E4EN0MW22L`).
+
+- Os eventos `page_view` das landing pages (`/` e `/va`) enviam o parâmetro `variant` com os valores `A` ou `VA`.
+- O evento `sign_up` também inclui o `variant` e utiliza `event_callback` para redirecionar somente após o rastreamento.
