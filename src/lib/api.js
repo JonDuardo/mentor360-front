@@ -1,38 +1,38 @@
 // src/lib/api.js
 
-// 1) Ler variável explícita de AMBOS ecos: Vite e CRA
-const viteVar =
-  typeof import.meta !== "undefined" && import.meta.env
-    ? import.meta.env.VITE_API_BASE
-    : undefined;
+// Resolve a URL base da API priorizando variáveis de ambiente do CRA,
+// com fallbacks locais simples para desenvolvimento.
+const craUrl =
+  process.env.REACT_APP_API_BASE_URL &&
+  process.env.REACT_APP_API_BASE_URL.trim();
+const craBase =
+  process.env.REACT_APP_API_BASE && process.env.REACT_APP_API_BASE.trim();
+const craBackend =
+  process.env.REACT_APP_BACKEND_URL &&
+  process.env.REACT_APP_BACKEND_URL.trim();
 
-const craVar =
-  typeof process !== "undefined" && process.env
-    ? process.env.REACT_APP_API_BASE
-    : undefined;
-
-// 2) Preferir a que existir (e tenha conteúdo)
-const explicit = (viteVar && viteVar.trim()) || (craVar && craVar.trim());
-
-// 3) Fallback automático por hostname
-//    -> local: usa 3001 (backend local)
-//    -> produção: URL pública no Render
-const isLocal =
+const inferLocal =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1");
+    window.location.hostname === "127.0.0.1")
+    ? "http://localhost:3001"
+    : null;
 
-const inferred = isLocal
-  ? "http://localhost:3001"
-  : "https://mentor360-back.onrender.com"; // ajuste se sua URL do Render for outra
+// Se precisar de fallback web, use o mesmo host do front (origem) com heurística simples,
+// ou mantenha null para não viciar em domínio de produção errado.
+const inferWeb = null;
 
-// 4) Base final
-export const API_BASE = explicit || inferred;
+export const API_BASE =
+  craUrl || craBase || craBackend || inferLocal || inferWeb;
 
-console.log("[API_BASE:resolved]", API_BASE, { viteVar, craVar, inferred });
+if (typeof window !== "undefined") {
+  // Log curto para validação no Console
+  console.log("[API_BASE:resolved]", API_BASE, { craUrl, craBase, craBackend });
+}
 
-// 5) Helper para montar URLs de forma segura e padronizada
+// Helper para montar URLs de forma segura e padronizada
 export function apiUrl(path = "") {
-  if (!path) return API_BASE;
-  return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  const base = API_BASE || "";
+  if (!path) return base;
+  return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
