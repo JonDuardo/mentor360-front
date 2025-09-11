@@ -4,6 +4,15 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// init variant flag (A | VA)
+try {
+  const current = sessionStorage.getItem('lp');
+  if (!current) {
+    const v = window.location.pathname.includes('/va') ? 'VA' : 'A';
+    sessionStorage.setItem('lp', v);
+  }
+} catch { /* ignore */ }
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
