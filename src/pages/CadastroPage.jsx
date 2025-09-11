@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../config"; // usa a URL central
 import { useNavigate } from "react-router-dom";
-import { gaSignUp } from "../lib/ga4";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -45,30 +44,37 @@ export default function CadastroPage() {
         throw new Error(msg);
       }
 
-      // sucesso: dispara conversão e segue o fluxo
-      gaSignUp({ method: "form" });
+      if (res.ok) {
+        setMensagem("Cadastro realizado com sucesso! Redirecionando...");
 
-      setMensagem("Cadastro realizado com sucesso! Redirecionando...");
+        const variant =
+          sessionStorage.getItem("lp") ||
+          (window.location.pathname.includes("/va") ? "VA" : "A");
+        let redirected = false;
+        const doRedirect = () => {
+          if (!redirected) {
+            redirected = true;
+            navigate("/login");
+          }
+        };
+        const fallback = setTimeout(doRedirect, 2000);
 
-try {
-  window.gtag?.("event", "sign_up", {
-    method: "form",
-    landing_page:
-      (window.sessionStorage && sessionStorage.getItem("lp")) ||
-      (window.location.pathname + window.location.search),
-    event_callback: () => navigate("/login", { replace: true })
-  });
-  // fallback caso o GA não chame o callback
-  setTimeout(() => navigate("/login", { replace: true }), 1000);
-} catch {
-  navigate("/login", { replace: true });
-}
-
-
-
-
-
-      setNome(""); setEmail(""); setTelefone(""); setTelefoneEmergencia(""); setSenha("");
+        if (window.gtag) {
+          window.gtag("event", "sign_up", {
+            method: "email_password",
+            variant,
+            page_location: window.location.href,
+            page_path: window.location.pathname,
+            event_callback: () => {
+              clearTimeout(fallback);
+              doRedirect();
+            },
+          });
+        } else {
+          doRedirect();
+        }
+        return;
+      }
     } catch (err) {
       setMensagem(
         err.message === "Failed to fetch"
