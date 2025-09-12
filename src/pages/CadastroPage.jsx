@@ -56,7 +56,7 @@ export default function CadastroPage() {
 
     let redirected = false;
     try {
-      window.gtag?.("event", "sign_up", {
+      window.gtag?.("event", "app_sign_up", {
         method: "form",
         variant,
         landing_page:
